@@ -1,3 +1,7 @@
+// Controllers are responsible for validating the request,
+// calling the appropriate service, and sending back the
+// response.
+
 import { z } from "zod";
 import catchErrors from "../utils/catchErrors";
 
