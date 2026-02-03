@@ -2,10 +2,13 @@
 // They interact with the database and external services. 
 // Services may also call other services.
 
+import { JWT_REFRESH_SECRET, JWT_SECRET } from "../constants/env";
 import VerificationCodeType from "../constants/verificationCodeTypes";
+import SessionModel from "../models/session.model";
 import UserModel from "../models/user.model";
 import VerificationCodeModel from "../models/verificationCode.model";
 import { oneYearFromNow } from "../utils/date";
+import jwt from "jsonwebtoken";
 
 export type CreateAccountParams = {
   email: string;
@@ -56,6 +59,27 @@ export async function createAccount(data: CreateAccountParams) {
   // user is logged in. Our session will be valid for 30
   // days, and the users will be able to use the access
   // and the refresh tokens to stay logged in. 
+  const session = await SessionModel.create({
+    userId: user._id,
+    userAgent: data.userAgent
+  });
 
+  // sixth step: sign access token & refresh token
 
+  const refreshToken = jwt.sign({sessionId: session._id},  JWT_REFRESH_SECRET, {
+    audience: ["user"],
+    expiresIn: "30d"
+  });
+
+  const accessToken = jwt.sign({sessionId: session._id},  JWT_SECRET, {
+    audience: ["user"],
+    expiresIn: "15m"
+  });
+
+  // seventh step: return user & tokens
+  return {
+    user,
+    accessToken,
+    refreshToken
+  };
 }
