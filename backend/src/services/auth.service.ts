@@ -2,7 +2,10 @@
 // They interact with the database and external services. 
 // Services may also call other services.
 
+import VerificationCodeType from "../constants/verificationCodeTypes";
 import UserModel from "../models/user.model";
+import VerificationCodeModel from "../models/verificationCode.model";
+import { oneYearFromNow } from "../utils/date";
 
 export type CreateAccountParams = {
   email: string;
@@ -38,5 +41,12 @@ export async function createAccount(data: CreateAccountParams) {
   const user = await UserModel.create({
     email: data.email,
     password: data.password
+  });
+
+  // third step: create the verification code
+  const verificationCode = await VerificationCodeModel.create({
+    userId: user._id,
+    type: VerificationCodeType.EmailVerification,
+    expiresAt: oneYearFromNow()
   });
 }
