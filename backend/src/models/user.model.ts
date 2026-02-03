@@ -1,5 +1,4 @@
 import mongoose from "mongoose";
-import bcrypt from "bcrypt";
 import { compareValue, hashValue } from "../utils/bcrypt";
 
 
@@ -15,11 +14,17 @@ export interface UserDocument extends Document {
   comparePassword(val: string) : Promise<boolean>
 };
 
+// A schema defines the structure, rules and behavior
+// of documents within a MongoDB collection.
 const userSchema = new mongoose.Schema<UserDocument>({
   email: { type: String, unique: true, required: true },
   password: { type: String, required: true },
   verified: { type: Boolean, required: true, default: false }
 }, {
+
+  // The timestamps option enables automatic tracking of
+  // document creation and update times.
+
   timestamps: true
 });
 
@@ -35,9 +40,15 @@ userSchema.pre("save", async function () {
   this.password = await hashValue(this.password);
 });
 
+// Schema methods: functions attached to a schema that
+// can be called on individual documents to operate on
+// that document's data.
 userSchema.methods.comparePassword = async function (val: string) {
   return compareValue(val, this.password);
 };
 
-const userModel = mongoose.model<UserDocument>("User", userSchema);
-export default userModel;
+// A model is a compiled representation of a schema that
+// provides an interface to interact with a MongoDB
+// collection. It's the tool you use to work with the data.
+const UserModel = mongoose.model<UserDocument>("User", userSchema);
+export default UserModel;
