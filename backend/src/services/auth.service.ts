@@ -49,4 +49,13 @@ export async function createAccount(data: CreateAccountParams) {
     type: VerificationCodeType.EmailVerification,
     expiresAt: oneYearFromNow()
   });
+
+  // five step: create session
+
+  // A session is gonna represent a unit of time that a
+  // user is logged in. Our session will be valid for 30
+  // days, and the users will be able to use the access
+  // and the refresh tokens to stay logged in. 
+
+
 }
