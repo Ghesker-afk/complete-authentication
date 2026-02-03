@@ -66,11 +66,21 @@ export async function createAccount(data: CreateAccountParams) {
 
   // sixth step: sign access token & refresh token
 
+  // The payload is the data encoded in the token, and
+  // you can later decode it to know which session / user
+  // the token belongs to. The secret is the cryptographic
+  // key for signing, and options includes expiration, audi-
+  // ence, issuer, etc.
+
+  // Refresh token: long-lived, used to get new access
+  // tokens without logging in again.
   const refreshToken = jwt.sign({sessionId: session._id},  JWT_REFRESH_SECRET, {
     audience: ["user"],
     expiresIn: "30d"
   });
 
+  // Access token: short-lived, used to get access
+  // protected resources.
   const accessToken = jwt.sign({sessionId: session._id},  JWT_SECRET, {
     audience: ["user"],
     expiresIn: "15m"
