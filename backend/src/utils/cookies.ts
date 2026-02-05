@@ -1,12 +1,16 @@
 import { CookieOptions, Response } from "express";
 import { fifteenMinutesFromNow, thirtyDaysFromNow } from "./date";
 
+// A cookie is a small piece of data that a server asks the 
+// client (browser) to store, and then the browser automatica-
+// lly sends it back with future requests to the same server.
+
 const secure = process.env.NODE_ENV !== "development";
 
 const defaults: CookieOptions = {
   sameSite: "strict",
-  httpOnly: true,
-  secure
+  httpOnly: true,  // not accessible by JS (prevents XXS)
+  secure // sent only over HTTPS
 };
 
 function getAccessTokenCookieOptions(): CookieOptions {
@@ -20,7 +24,7 @@ function getRefreshTokenOptions(): CookieOptions {
   return {
     ...defaults,
     expires: thirtyDaysFromNow(),
-    path: "/auth/refresh"
+    path: "/auth/refresh" // cookie is only sent on requests to this path
   };
 } 
 
@@ -30,6 +34,10 @@ type Params = {
   refreshToken: string;
 };
 
+// the res.cookie sets a cookie on the client.
+
+// sets both cookies in the response, ready for secure
+// client storage.
 export function setAuthCookies({ res, accessToken, refreshToken }: Params) {
   return res
     .cookie("accessToken", accessToken, getAccessTokenCookieOptions())
