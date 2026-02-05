@@ -5,6 +5,7 @@ import { fifteenMinutesFromNow, thirtyDaysFromNow } from "./date";
 // client (browser) to store, and then the browser automatica-
 // lly sends it back with future requests to the same server.
 
+export const REFRESH_PATH = "/auth/refresh";
 const secure = process.env.NODE_ENV !== "development";
 
 const defaults: CookieOptions = {
@@ -24,7 +25,7 @@ function getRefreshTokenOptions(): CookieOptions {
   return {
     ...defaults,
     expires: thirtyDaysFromNow(),
-    path: "/auth/refresh" // cookie is only sent on requests to this path
+    path: REFRESH_PATH // cookie is only sent on requests to this path
   };
 } 
 
@@ -42,4 +43,10 @@ export function setAuthCookies({ res, accessToken, refreshToken }: Params) {
   return res
     .cookie("accessToken", accessToken, getAccessTokenCookieOptions())
     .cookie("refreshToken", refreshToken, getRefreshTokenOptions());
+};
+
+export function clearAuthCookies(res: Response) {
+  return res.clearCookie("accessToken").clearCookie("refreshToken", {
+    path: REFRESH_PATH
+  });
 };

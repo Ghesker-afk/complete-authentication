@@ -5,8 +5,10 @@
 import catchErrors from "../utils/catchErrors";
 import { createAccount, loginUser } from "../services/auth.service";
 import { CREATED, OK } from "../constants/http";
-import { setAuthCookies } from "../utils/cookies";
+import { clearAuthCookies, setAuthCookies } from "../utils/cookies";
 import { loginSchema, registerSchema } from "./auth.schemas";
+import { verifyToken } from "../utils/jwt";
+import SessionModel from "../models/session.model";
 
 export const registerHandler = catchErrors(
   async(req, res) => {
@@ -33,6 +35,29 @@ export const loginHandler = catchErrors(async (req, res) => {
   const {accessToken, refreshToken, user} = await loginUser(request);
 
   return setAuthCookies({ res, accessToken, refreshToken }).status(OK).json({ message: "Login successful" });
+});
+
+export const logoutHandler = catchErrors(async (req, res) => {
+ 
+  // first step: we will grab the access token from the cookie
+  const accessToken = req.cookies.accessToken;
+
+  // we wanna verify the token, because if it's valid, we
+  // want to delete the session that's assigned to this
+  // access token.
+  const { payload, error } = verifyToken(accessToken);
+
+  if (payload) {
+    await SessionModel.findByIdAndDelete(payload.sessionId)
+  }
+
+  // the last step is to clear our cookies, so when the user
+  // logs out, we wanna clear all of their cookies so they
+  // will not present in any subsequent request.
+
+  return clearAuthCookies(res).status(OK).json({
+    message: "Logout successfully"
+  });
 });
 
 // stopped at: 1:33:06

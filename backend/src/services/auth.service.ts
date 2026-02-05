@@ -2,7 +2,6 @@
 // They interact with the database and external services. 
 // Services may also call other services.
 
-import { JWT_REFRESH_SECRET, JWT_SECRET } from "../constants/env";
 import { CONFLICT, UNAUTHORIZED } from "../constants/http";
 import VerificationCodeType from "../constants/verificationCodeTypes";
 import SessionModel from "../models/session.model";

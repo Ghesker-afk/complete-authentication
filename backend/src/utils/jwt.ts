@@ -1,4 +1,4 @@
-import jwt, { SignOptions } from "jsonwebtoken";
+import jwt, { SignOptions, VerifyOptions } from "jsonwebtoken";
 import { SessionDocument } from "../models/session.model";
 import { UserDocument } from "../models/user.model";
 import { JWT_REFRESH_SECRET, JWT_SECRET } from "../constants/env";
@@ -17,7 +17,7 @@ type SignOptionsAndSecret = SignOptions & {
 };
 
 const defaults: SignOptions = {
-  audience: ["user"]
+  audience: "user"
 };
 
 const accessTokenSignOptions: SignOptionsAndSecret = {
@@ -40,3 +40,27 @@ export const signToken = (
     ...signOpts
   });
 };
+
+type VerifyOptionsAndSecret = VerifyOptions & { secret: string };
+
+export function verifyToken<Payload extends object = AccessTokenPayload>(token: string, options?: VerifyOptionsAndSecret) {
+
+  const { secret = JWT_SECRET, ...verifyOpts } = options || {};
+
+  try {
+
+    const payload = jwt.verify(token, secret, {
+      ...verifyOpts
+    }) as Payload;
+
+    return {
+      payload
+    };
+
+  } catch (error: any) {
+
+    return {
+      error: error.message
+    }
+  };
+}
