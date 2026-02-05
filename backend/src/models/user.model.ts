@@ -5,13 +5,14 @@ import { compareValue, hashValue } from "../utils/bcrypt";
 // The Document inheritance provides TypeScript typings for 
 // a Mongoose document, including built-in document methods 
 // and custom fields.
-export interface UserDocument extends Document {
+export interface UserDocument extends mongoose.Document {
   email: string;
   password: string;
   verified: boolean;
   createdAt: Date;
   updatedAt: Date;
-  comparePassword(val: string) : Promise<boolean>
+  comparePassword(val: string) : Promise<boolean>;
+  omitPassword(): Pick<UserDocument, "_id" | "email" | "verified" | "createdAt" | "updatedAt">;
 };
 
 // A schema defines the structure, rules and behavior
@@ -45,6 +46,12 @@ userSchema.pre("save", async function () {
 // that document's data.
 userSchema.methods.comparePassword = async function (val: string) {
   return compareValue(val, this.password);
+};
+
+userSchema.methods.omitPassword = function() {
+  const user = this.toObject();
+  delete user.password;
+  return user;
 };
 
 // A model is a compiled representation of a schema that

@@ -3,10 +3,12 @@
 // Services may also call other services.
 
 import { JWT_REFRESH_SECRET, JWT_SECRET } from "../constants/env";
+import { CONFLICT } from "../constants/http";
 import VerificationCodeType from "../constants/verificationCodeTypes";
 import SessionModel from "../models/session.model";
 import UserModel from "../models/user.model";
 import VerificationCodeModel from "../models/verificationCode.model";
+import appAssert from "../utils/appAssert";
 import { oneYearFromNow } from "../utils/date";
 import jwt from "jsonwebtoken";
 
@@ -33,9 +35,7 @@ export async function createAccount(data: CreateAccountParams) {
     email: data.email
   });
 
-  if (existingUser) {
-    throw new Error("User already exists.");
-  }
+  appAssert(!existingUser, CONFLICT, "Email already in use");
 
   // second step: create the user 
 
@@ -88,7 +88,7 @@ export async function createAccount(data: CreateAccountParams) {
 
   // seventh step: return user & tokens
   return {
-    user,
+    user: user.omitPassword(),
     accessToken,
     refreshToken
   };

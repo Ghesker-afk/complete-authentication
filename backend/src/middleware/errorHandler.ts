@@ -13,6 +13,7 @@
 import { ErrorRequestHandler, Response } from "express";
 import { z } from "zod";
 import { BAD_REQUEST } from "../constants/http";
+import AppError from "../utils/appError";
 
 function handleZodError(res: Response, error: z.ZodError) {
   const errors = error.issues.map((err) => (
@@ -28,6 +29,13 @@ function handleZodError(res: Response, error: z.ZodError) {
   });
 }
 
+const handleAppError = (res: Response, error: AppError) => {
+  return res.status(error.statusCode).json({
+    message: error.message,
+    errorCode: error.errorCode
+  });
+}
+
 const errorHandler: ErrorRequestHandler = (error, req, res, next) => {
 
   // The "path" property contains the path part of the
@@ -36,6 +44,10 @@ const errorHandler: ErrorRequestHandler = (error, req, res, next) => {
 
   if (error instanceof z.ZodError) {
     return handleZodError(res, error);
+  }
+
+  if (error instanceof AppError) {
+    return handleAppError(res, error);
   }
 
   return res.status(500).send("Internal Server Error");

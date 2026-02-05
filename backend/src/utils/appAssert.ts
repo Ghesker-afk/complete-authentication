@@ -8,7 +8,7 @@ type AppAssert = (
   condition: any,
   HttpStatusCode: HttpStatusCode,
   message: string,
-  appErrorCode: AppErrorCode
+  appErrorCode?: AppErrorCode
 ) => asserts condition;
 
 /**
