@@ -11,6 +11,7 @@ import VerificationCodeModel from "../models/verificationCode.model";
 import appAssert from "../utils/appAssert";
 import { oneYearFromNow } from "../utils/date";
 import jwt from "jsonwebtoken";
+import { refreshTokenOptions, signToken } from "../utils/jwt";
 
 export type CreateAccountParams = {
   email: string;
@@ -46,6 +47,8 @@ export async function createAccount(data: CreateAccountParams) {
     password: data.password
   });
 
+  const userId = user._id;
+
   // third step: create the verification code
   const verificationCode = await VerificationCodeModel.create({
     userId: user._id,
@@ -60,7 +63,7 @@ export async function createAccount(data: CreateAccountParams) {
   // days, and the users will be able to use the access
   // and the refresh tokens to stay logged in. 
   const session = await SessionModel.create({
-    userId: user._id,
+    userId,
     userAgent: data.userAgent
   });
 
@@ -74,16 +77,15 @@ export async function createAccount(data: CreateAccountParams) {
 
   // Refresh token: long-lived, used to get new access
   // tokens without logging in again.
-  const refreshToken = jwt.sign({sessionId: session._id},  JWT_REFRESH_SECRET, {
-    audience: ["user"],
-    expiresIn: "30d"
-  });
+  const refreshToken = signToken({
+    sessionId: session._id
+  }, refreshTokenOptions);
 
   // Access token: short-lived, used to get access
   // protected resources.
-  const accessToken = jwt.sign({sessionId: session._id},  JWT_SECRET, {
-    audience: ["user"],
-    expiresIn: "15m"
+  const accessToken = signToken({
+    userId,
+    sessionId: session._id
   });
 
   // seventh step: return user & tokens
@@ -116,7 +118,7 @@ export async function loginUser({ email, password, userAgent }: LoginParams) {
     userAgent
   });
 
-  const sessioninfo = {
+  const sessionInfo = {
     sessionId: session._id
   };
 
@@ -124,17 +126,15 @@ export async function loginUser({ email, password, userAgent }: LoginParams) {
 
   // Refresh token: long-lived, used to get new access
   // tokens without logging in again.
-  const refreshToken = jwt.sign({sessioninfo},  JWT_REFRESH_SECRET, {
-    audience: ["user"],
-    expiresIn: "30d"
-  });
+  const refreshToken = signToken(sessionInfo, refreshTokenOptions);
 
   // Access token: short-lived, used to get access
   // protected resources.
-  const accessToken = jwt.sign({...sessioninfo},  JWT_SECRET, {
-    audience: ["user"],
-    expiresIn: "15m"
-  });
+  const accessToken = signToken(
+    {
+      ...sessionInfo,
+      userId: user._id
+    });
 
   // return the user and the tokens
   return {

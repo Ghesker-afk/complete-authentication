@@ -12,7 +12,7 @@
 
 import { ErrorRequestHandler, Response } from "express";
 import { z } from "zod";
-import { BAD_REQUEST } from "../constants/http";
+import { BAD_REQUEST, INTERNAL_SERVER_ERROR } from "../constants/http";
 import AppError from "../utils/appError";
 
 function handleZodError(res: Response, error: z.ZodError) {
@@ -36,7 +36,7 @@ const handleAppError = (res: Response, error: AppError) => {
   });
 }
 
-const errorHandler: ErrorRequestHandler = (error, req, res, next) => {
+const errorHandler: ErrorRequestHandler = (error, req, res, _next) => {
 
   // The "path" property contains the path part of the
   // request URL, as "/users", "/register", "/refresh", etc.
@@ -50,7 +50,7 @@ const errorHandler: ErrorRequestHandler = (error, req, res, next) => {
     return handleAppError(res, error);
   }
 
-  return res.status(500).send("Internal Server Error");
+  return res.status(INTERNAL_SERVER_ERROR).send("Internal Server Error");
 };
 
 export default errorHandler;
