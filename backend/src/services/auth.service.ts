@@ -3,7 +3,7 @@
 // Services may also call other services.
 
 import { JWT_REFRESH_SECRET, JWT_SECRET } from "../constants/env";
-import { CONFLICT } from "../constants/http";
+import { CONFLICT, UNAUTHORIZED } from "../constants/http";
 import VerificationCodeType from "../constants/verificationCodeTypes";
 import SessionModel from "../models/session.model";
 import UserModel from "../models/user.model";
@@ -87,6 +87,56 @@ export async function createAccount(data: CreateAccountParams) {
   });
 
   // seventh step: return user & tokens
+  return {
+    user: user.omitPassword(),
+    accessToken,
+    refreshToken
+  };
+};
+
+export type LoginParams = {
+  email: string;
+  password: string;
+  userAgent?: string;
+};
+
+export async function loginUser({ email, password, userAgent }: LoginParams) {
+  // first, we need to get the user by email
+  const user = await UserModel.findOne({ email });
+  appAssert(user, UNAUTHORIZED, "Invalid email or password");
+
+  // second step: validate the password from the request
+  const isValid = await user.comparePassword(password);
+  appAssert(isValid, UNAUTHORIZED, "Invalid email or password");
+
+  const userId = user._id;
+  // third step: create a session
+  const session = await SessionModel.create({
+    userId,
+    userAgent
+  });
+
+  const sessioninfo = {
+    sessionId: session._id
+  };
+
+  // forth step: sign the refresh and access tokens and
+
+  // Refresh token: long-lived, used to get new access
+  // tokens without logging in again.
+  const refreshToken = jwt.sign({sessioninfo},  JWT_REFRESH_SECRET, {
+    audience: ["user"],
+    expiresIn: "30d"
+  });
+
+  // Access token: short-lived, used to get access
+  // protected resources.
+  const accessToken = jwt.sign({...sessioninfo},  JWT_SECRET, {
+    audience: ["user"],
+    expiresIn: "15m"
+  });
+
+  // return the user and the tokens
   return {
     user: user.omitPassword(),
     accessToken,

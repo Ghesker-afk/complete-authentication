@@ -2,23 +2,11 @@
 // calling the appropriate service, and sending back the
 // response.
 
-import { z } from "zod";
 import catchErrors from "../utils/catchErrors";
 import { createAccount } from "../services/auth.service";
 import { CREATED } from "../constants/http";
 import { setAuthCookies } from "../utils/cookies";
-
-const registerSchema = z.object({
-  email: z.email().min(1).max(255),
-  password: z.string().min(6).max(255),
-  confirmPassword: z.string().min(6).max(255),
-  userAgent: z.string().optional()
-}).refine(
-  (data) => data.password === data.confirmPassword, {
-    message: "Passwords don't match",
-    path: ["confirmPassword"]
-  }
-);
+import { loginSchema, registerSchema } from "./auth.schemas";
 
 export const registerHandler = catchErrors(
   async(req, res) => {
@@ -35,3 +23,12 @@ export const registerHandler = catchErrors(
     return setAuthCookies({ res, accessToken, refreshToken }).status(CREATED).json({ user });
   }
 );
+
+export const loginHandler = catchErrors(async (req, res) => {
+  const request = loginSchema.parse({
+    ...req.body, 
+    userAgent: req.headers["user-agent"]
+    });
+
+  const {} = await loginUser(req);
+});
