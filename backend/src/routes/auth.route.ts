@@ -2,7 +2,7 @@
 // and forwarding them to the appropriate controller.
 
 import { Router } from "express";
-import { loginHandler, logoutHandler, refreshHandler, registerHandler } from "../controllers/auth.controller";
+import { emailVerifyHandler, loginHandler, logoutHandler, refreshHandler, registerHandler } from "../controllers/auth.controller";
 
 const authRoutes = Router();
 
@@ -11,5 +11,6 @@ authRoutes.post("/register", registerHandler);
 authRoutes.post("/login", loginHandler);
 authRoutes.get("/refresh", refreshHandler);
 authRoutes.get("/logout", logoutHandler);
+authRoutes.get("/email/verify/:code", emailVerifyHandler);
 
 export default authRoutes;

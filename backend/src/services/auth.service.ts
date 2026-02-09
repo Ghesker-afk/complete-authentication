@@ -2,7 +2,7 @@
 // They interact with the database and external services. 
 // Services may also call other services.
 
-import { CONFLICT, UNAUTHORIZED } from "../constants/http";
+import { CONFLICT, INTERNAL_SERVER_ERROR, NOT_FOUND, UNAUTHORIZED } from "../constants/http";
 import VerificationCodeType from "../constants/verificationCodeTypes";
 import SessionModel from "../models/session.model";
 import UserModel from "../models/user.model";
@@ -184,6 +184,32 @@ export async function refreshUserAccessToken(refreshToken: string) {
   return {
     accessToken,
     newRefreshToken
+  };
+}
+
+export async function verifyEmail(code: string) {
+  // first, get the verification code
+
+  const validCode = await VerificationCodeModel.findOne({
+    _id: code,
+    type: VerificationCodeType.EmailVerification,
+    expiresAt: { $gt: new Date() }
+  });
+
+  appAssert(validCode, NOT_FOUND, "Invalid or expired verification code");
+
+  // update the user to verified: true
+
+  const updatedUser = await UserModel.findByIdAndUpdate(validCode.userId, { verified: true }, { new: true });
+
+  appAssert(updatedUser, INTERNAL_SERVER_ERROR, "Failed to verify email");
+
+  // delete the verification code
+  await validCode.deleteOne();
+
+  // return user
+  return {
+    user: updatedUser.omitPassword()
   };
 }
 

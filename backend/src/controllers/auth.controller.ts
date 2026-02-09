@@ -3,10 +3,10 @@
 // response.
 
 import catchErrors from "../utils/catchErrors";
-import { createAccount, loginUser, refreshUserAccessToken } from "../services/auth.service";
+import { createAccount, loginUser, refreshUserAccessToken, verifyEmail } from "../services/auth.service";
 import { CREATED, OK, UNAUTHORIZED } from "../constants/http";
 import { clearAuthCookies, getAccessTokenCookieOptions, getRefreshTokenOptions, setAuthCookies } from "../utils/cookies";
-import { loginSchema, registerSchema } from "./auth.schemas";
+import { loginSchema, registerSchema, verificationCodeSchema } from "./auth.schemas";
 import { verifyToken } from "../utils/jwt";
 import SessionModel from "../models/session.model";
 import appAssert from "../utils/appAssert";
@@ -83,4 +83,19 @@ export const refreshHandler = catchErrors(async (req, res) => {
     message: "Access token refreshed"
   });
 
+});
+
+export const emailVerifyHandler = catchErrors(async (req, res) => {
+
+  // First, we must validate the request. So, we will create
+  // a zod schema to ensure that verification code contains
+  // at least 1 character and at max 24 characters.
+  const verificationCode = verificationCodeSchema.parse(req.params.code);
+
+  // Second, we will call the service.
+  await verifyEmail(verificationCode);
+
+  return res.status(OK).json({
+    message: "Email was successfully verified"
+  });
 });
