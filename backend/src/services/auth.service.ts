@@ -10,7 +10,7 @@ import VerificationCodeModel from "../models/verificationCode.model";
 import appAssert from "../utils/appAssert";
 import { oneYearFromNow } from "../utils/date";
 import jwt from "jsonwebtoken";
-import { refreshTokenOptions, signToken } from "../utils/jwt";
+import { refreshTokenOptions, RefreshTokenPayload, signToken, verifyToken } from "../utils/jwt";
 
 export type CreateAccountParams = {
   email: string;
@@ -133,7 +133,8 @@ export async function loginUser({ email, password, userAgent }: LoginParams) {
     {
       ...sessionInfo,
       userId: user._id
-    });
+    }
+  );
 
   // return the user and the tokens
   return {
@@ -142,3 +143,23 @@ export async function loginUser({ email, password, userAgent }: LoginParams) {
     refreshToken
   };
 }
+
+export async function refreshUserAccessToken(refreshToken: string) {
+
+  const {
+    payload
+  } = verifyToken<RefreshTokenPayload>(refreshToken, {
+    secret: refreshTokenOptions.secret
+  });
+  appAssert(payload, UNAUTHORIZED, "Invalid refresh token");
+
+  const session = await SessionModel.findById(payload.sessionId);
+  const now = Date.now();
+  appAssert(
+    session && session.expiresAt.getTime() > now, 
+    UNAUTHORIZED, 
+    "Session expired"
+  );
+}
+
+// stops at 1:55:24

@@ -4,11 +4,12 @@
 
 import catchErrors from "../utils/catchErrors";
 import { createAccount, loginUser } from "../services/auth.service";
-import { CREATED, OK } from "../constants/http";
+import { CREATED, OK, UNAUTHORIZED } from "../constants/http";
 import { clearAuthCookies, setAuthCookies } from "../utils/cookies";
 import { loginSchema, registerSchema } from "./auth.schemas";
 import { verifyToken } from "../utils/jwt";
 import SessionModel from "../models/session.model";
+import appAssert from "../utils/appAssert";
 
 export const registerHandler = catchErrors(
   async(req, res) => {
@@ -40,12 +41,12 @@ export const loginHandler = catchErrors(async (req, res) => {
 export const logoutHandler = catchErrors(async (req, res) => {
  
   // first step: we will grab the access token from the cookie
-  const accessToken = req.cookies.accessToken;
+  const accessToken = req.cookies.accessToken as string | undefined;
 
   // we wanna verify the token, because if it's valid, we
   // want to delete the session that's assigned to this
   // access token.
-  const { payload, error } = verifyToken(accessToken);
+  const { payload, error } = verifyToken(accessToken || "");
 
   if (payload) {
     await SessionModel.findByIdAndDelete(payload.sessionId)
@@ -60,4 +61,8 @@ export const logoutHandler = catchErrors(async (req, res) => {
   });
 });
 
-// stopped at: 1:33:06
+export const refreshHandler = catchErrors(async (req, res) => {
+
+  const refreshToken = req.cookies.refreshToken as string | undefined;
+  appAssert(refreshToken, UNAUTHORIZED, "Missing refresh token");
+});

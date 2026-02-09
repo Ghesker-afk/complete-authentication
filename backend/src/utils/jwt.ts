@@ -17,7 +17,7 @@ type SignOptionsAndSecret = SignOptions & {
 };
 
 const defaults: SignOptions = {
-  audience: "user"
+  audience: ["user"]
 };
 
 const accessTokenSignOptions: SignOptionsAndSecret = {
