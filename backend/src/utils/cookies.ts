@@ -14,14 +14,14 @@ const defaults: CookieOptions = {
   secure // sent only over HTTPS
 };
 
-function getAccessTokenCookieOptions(): CookieOptions {
+export function getAccessTokenCookieOptions(): CookieOptions {
   return {
     ...defaults,
     expires: fifteenMinutesFromNow()
   };
 };
 
-function getRefreshTokenOptions(): CookieOptions {
+export function getRefreshTokenOptions(): CookieOptions {
   return {
     ...defaults,
     expires: thirtyDaysFromNow(),

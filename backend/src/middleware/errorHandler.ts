@@ -14,6 +14,7 @@ import { ErrorRequestHandler, Response } from "express";
 import { z } from "zod";
 import { BAD_REQUEST, INTERNAL_SERVER_ERROR } from "../constants/http";
 import AppError from "../utils/appError";
+import { clearAuthCookies, REFRESH_PATH } from "../utils/cookies";
 
 function handleZodError(res: Response, error: z.ZodError) {
   const errors = error.issues.map((err) => (
@@ -41,6 +42,12 @@ const errorHandler: ErrorRequestHandler = (error, req, res, _next) => {
   // The "path" property contains the path part of the
   // request URL, as "/users", "/register", "/refresh", etc.
   console.log(`PATH: ${req.path}`, error);
+
+  // All the cookies will be cleared when an error occurs on
+  // this path.
+  if (req.path === REFRESH_PATH) {
+    clearAuthCookies(res);
+  }
 
   if (error instanceof z.ZodError) {
     return handleZodError(res, error);

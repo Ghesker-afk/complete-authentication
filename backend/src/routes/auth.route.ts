@@ -2,7 +2,7 @@
 // and forwarding them to the appropriate controller.
 
 import { Router } from "express";
-import { loginHandler, logoutHandler, registerHandler } from "../controllers/auth.controller";
+import { loginHandler, logoutHandler, refreshHandler, registerHandler } from "../controllers/auth.controller";
 
 const authRoutes = Router();
 

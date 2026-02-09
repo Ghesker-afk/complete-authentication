@@ -8,9 +8,8 @@ import SessionModel from "../models/session.model";
 import UserModel from "../models/user.model";
 import VerificationCodeModel from "../models/verificationCode.model";
 import appAssert from "../utils/appAssert";
-import { oneYearFromNow } from "../utils/date";
-import jwt from "jsonwebtoken";
-import { refreshTokenOptions, RefreshTokenPayload, signToken, verifyToken } from "../utils/jwt";
+import { ONE_DAY_MS, oneYearFromNow, thirtyDaysFromNow } from "../utils/date";
+import { RefreshTokenPayload, refreshTokenSignOptions, signToken, verifyToken } from "../utils/jwt";
 
 export type CreateAccountParams = {
   email: string;
@@ -78,7 +77,7 @@ export async function createAccount(data: CreateAccountParams) {
   // tokens without logging in again.
   const refreshToken = signToken({
     sessionId: session._id
-  }, refreshTokenOptions);
+  }, refreshTokenSignOptions);
 
   // Access token: short-lived, used to get access
   // protected resources.
@@ -125,7 +124,7 @@ export async function loginUser({ email, password, userAgent }: LoginParams) {
 
   // Refresh token: long-lived, used to get new access
   // tokens without logging in again.
-  const refreshToken = signToken(sessionInfo, refreshTokenOptions);
+  const refreshToken = signToken(sessionInfo, refreshTokenSignOptions);
 
   // Access token: short-lived, used to get access
   // protected resources.
@@ -149,17 +148,43 @@ export async function refreshUserAccessToken(refreshToken: string) {
   const {
     payload
   } = verifyToken<RefreshTokenPayload>(refreshToken, {
-    secret: refreshTokenOptions.secret
+    secret: refreshTokenSignOptions.secret
   });
   appAssert(payload, UNAUTHORIZED, "Invalid refresh token");
 
   const session = await SessionModel.findById(payload.sessionId);
+
   const now = Date.now();
   appAssert(
     session && session.expiresAt.getTime() > now, 
     UNAUTHORIZED, 
     "Session expired"
   );
+
+  // Now, we need to check if the session is expiring soon
+  // because we will want to refresh it if it's the case.
+
+  // Refresh the session if it expires in the next 24 hours.
+  const sessionNeedsRefresh = session.expiresAt.getTime() - now <= ONE_DAY_MS;
+
+  if (sessionNeedsRefresh) {
+    session.expiresAt = thirtyDaysFromNow();
+    await session.save();
+  }
+
+  const newRefreshToken = sessionNeedsRefresh ? signToken({
+    sessionId: session._id,
+  }, refreshTokenSignOptions) : undefined;
+
+  const accessToken = signToken({
+    userId: session.userId,
+    sessionId: session._id
+  });
+
+  return {
+    accessToken,
+    newRefreshToken
+  };
 }
 
 // stops at 1:55:24
