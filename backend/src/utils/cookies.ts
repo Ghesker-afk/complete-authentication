@@ -1,12 +1,13 @@
 import { CookieOptions, Response } from "express";
 import { fifteenMinutesFromNow, thirtyDaysFromNow } from "./date";
+import { NODE_ENV } from "../constants/env";
 
 // A cookie is a small piece of data that a server asks the 
 // client (browser) to store, and then the browser automatica-
 // lly sends it back with future requests to the same server.
 
 export const REFRESH_PATH = "/auth/refresh";
-const secure = process.env.NODE_ENV !== "development";
+const secure = NODE_ENV !== "development";
 
 const defaults: CookieOptions = {
   sameSite: "strict",

@@ -17,3 +17,7 @@ export async function login(data: LoginUserData) {
 export async function register(data: RegisterUserData) {
   API.post("/auth/register", data);
 }
+
+export async function verifyEmail(verificationCode: string) {
+  API.get(`/auth/email/verify/${verificationCode}`);
+}
