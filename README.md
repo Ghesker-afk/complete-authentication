@@ -42,7 +42,7 @@ To get started, you need to have [Node.js](https://nodejs.org/en) installed. You
 Clone the project
 
 ```bash
-git clone https://github.com/nikitapryymak/mern-auth-jwt.git
+git clone https://github.com/Ghesker-afk/complete-authentication.git
 ```
 
 Navigate to the backend directory
